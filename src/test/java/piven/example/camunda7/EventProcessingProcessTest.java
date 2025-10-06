@@ -1,9 +1,20 @@
 package piven.example.camunda7;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
+import static org.camunda.bpm.engine.test.assertions.bpmn.BpmnAwareTests.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import org.assertj.core.api.Assertions;
-import org.camunda.bpm.engine.*;
+import org.camunda.bpm.engine.HistoryService;
+import org.camunda.bpm.engine.ManagementService;
+import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.RuntimeService;
+import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.history.HistoricActivityInstance;
-import org.camunda.bpm.engine.history.HistoricProcessInstance;
 import org.camunda.bpm.engine.runtime.Job;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.community.process_test_coverage.spring_test.platform7.ProcessEngineCoverageConfiguration;
@@ -14,7 +25,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import piven.example.camunda7.dto.ServiceRequest;
 import piven.example.camunda7.tasks.PrepareService;
 import piven.example.camunda7.tasks.PublicationService;
@@ -24,16 +34,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.awaitility.Awaitility.await;
-import static org.camunda.bpm.engine.test.assertions.bpmn.BpmnAwareTests.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 @SpringBootTest
-@DirtiesContext
-
 @Import(ProcessEngineCoverageConfiguration.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class EventProcessingProcessTest {
 
     @Autowired
@@ -112,7 +115,7 @@ class EventProcessingProcessTest {
                 "eventProcessing",
                 variables
         );
-        
+
         await().atMost(10, SECONDS).until(() ->
                 runtimeService.createProcessInstanceQuery()
                         .processInstanceId(processInstance.getId())
@@ -162,7 +165,7 @@ class EventProcessingProcessTest {
 
         assertThat(processInstance).isNotNull();
         assertThat(processInstance).isEnded();
-        
+
         verify(prepareService, times(4)).prepareResponse(any(ServiceRequest.class));
         verify(publicationService, times(4)).publish(any(ServiceRequest.class));
 
@@ -189,7 +192,7 @@ class EventProcessingProcessTest {
         variables.put("scenario", "UNKNOWN");
         initializePositiveVariables(variables);
         initializeNegativeVariables(variables);
-        
+
         processInstance = runtimeService.startProcessInstanceByKey(
                 "eventProcessing",
                 variables
@@ -199,7 +202,7 @@ class EventProcessingProcessTest {
 
         assertThat(processInstance).isNotNull();
         assertThat(processInstance).isEnded();
-        
+
         verify(prepareService, never()).prepareResponse(any(ServiceRequest.class));
         verify(publicationService, never()).publish(any(ServiceRequest.class));
         verify(saveService, never()).save(any(ServiceRequest.class));
@@ -315,7 +318,7 @@ class EventProcessingProcessTest {
 
         while (true) {
             List<Job> jobs = managementService.createJobQuery().list();
-            if (jobs.isEmpty()) break;
+            if (jobs.isEmpty()) {break;}
             Assertions.assertThat(jobs).isNotEmpty();
 
             for (Job job : jobs) {
@@ -404,7 +407,7 @@ class EventProcessingProcessTest {
     private void executeAllJobs() {
         while (true) {
             List<Job> jobs = managementService.createJobQuery().list();
-            if (jobs.isEmpty()) break;
+            if (jobs.isEmpty()) {break;}
 
             for (Job job : jobs) {
                 try {
@@ -418,33 +421,20 @@ class EventProcessingProcessTest {
 
     @AfterEach
     void cleanup() {
-        if (processInstance != null) {
-            try {
-                runtimeService.deleteProcessInstance(processInstance.getId(), "Test cleanup");
-            } catch (Exception e) {
-                // Игнорируем ошибки очистки
-            }
-        }
+        executeAllJobs();
 
-        var historicProcessInstances = historyService
-                .createHistoricProcessInstanceQuery()
-                .list();
+        runtimeService.createProcessInstanceQuery().list()
+                .forEach(pi -> {
+                    try {
+                        runtimeService.deleteProcessInstance(pi.getId(), "Test cleanup");
+                    } catch (Exception ignored) {}
+                });
 
-        for (HistoricProcessInstance hpi : historicProcessInstances) {
-            try {
-                historyService.deleteHistoricProcessInstance(hpi.getId());
-            } catch (Exception e) {
-                // Игнорируем ошибки очистки истории
-            }
-        }
-
-        var jobs = managementService.createJobQuery().list();
-        for (Job job : jobs) {
-            try {
-                managementService.deleteJob(job.getId());
-            } catch (Exception e) {
-                // Игнорируем ошибки удаления jobs
-            }
-        }
+        historyService.createHistoricProcessInstanceQuery().list()
+                .forEach(hpi -> {
+                    try {
+                        historyService.deleteHistoricProcessInstance(hpi.getId());
+                    } catch (Exception ignored) {}
+                });
     }
 }

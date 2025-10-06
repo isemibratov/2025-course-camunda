@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0k5h46t" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.39.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.23.0">
+  <bpmn:process id="creditScoringProcess" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0y2o96h</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="RestTask_CreditScoring" name="Кредитный скорринг" camunda:asyncBefore="true" camunda:resultVariable="scoring" camunda:type="external" camunda:topic="rest">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="url">
+            https://api.example.com/credit-scoring?clientId=${clientId}
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0y2o96h</bpmn:incoming>
+      <bpmn:outgoing>Flow_0o6do0s</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="Event_30Seconds" attachedToRef="RestTask_CreditScoring">
+      <bpmn:outgoing>Flow_19wox1r</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_1pzsirx">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT10S</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_0y2o96h" sourceRef="StartEvent_1" targetRef="RestTask_CreditScoring" />
+    <bpmn:endEvent id="SubProcess_CreditScoring_endError">
+      <bpmn:incoming>Flow_19wox1r</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_06it9sk" errorRef="Error_Timeout" />
+    </bpmn:endEvent>
+    <bpmn:endEvent id="SubProcess_CreditScoring_end">
+      <bpmn:incoming>Flow_0o6do0s</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_19wox1r" sourceRef="Event_30Seconds" targetRef="SubProcess_CreditScoring_endError" />
+    <bpmn:sequenceFlow id="Flow_0o6do0s" sourceRef="RestTask_CreditScoring" targetRef="SubProcess_CreditScoring_end" />
+  </bpmn:process>
+  <bpmn:error id="Error_Timeout" name="TimeoutError" errorCode="TIMEOUT" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="creditScoringProcess">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="182" y="162" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1snu56c_di" bpmnElement="RestTask_CreditScoring">
+        <dc:Bounds x="270" y="140" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0f553r0_di" bpmnElement="SubProcess_CreditScoring_endError">
+        <dc:Bounds x="482" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1dxiu9w_di" bpmnElement="SubProcess_CreditScoring_end">
+        <dc:Bounds x="482" y="182" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1e43aui_di" bpmnElement="Event_30Seconds">
+        <dc:Bounds x="352" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0y2o96h_di" bpmnElement="Flow_0y2o96h">
+        <di:waypoint x="218" y="180" />
+        <di:waypoint x="270" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19wox1r_di" bpmnElement="Flow_19wox1r">
+        <di:waypoint x="388" y="140" />
+        <di:waypoint x="482" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0o6do0s_di" bpmnElement="Flow_0o6do0s">
+        <di:waypoint x="370" y="200" />
+        <di:waypoint x="482" y="200" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

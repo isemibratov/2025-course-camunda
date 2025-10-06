@@ -1,21 +1,23 @@
 package piven.example.camunda7;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.awaitility.Awaitility.await;
 import static org.camunda.bpm.engine.test.assertions.bpmn.BpmnAwareTests.withVariables;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
+import static org.springframework.test.util.AssertionErrors.fail;
 
+import lombok.SneakyThrows;
 import org.camunda.bpm.engine.DecisionService;
+import org.camunda.bpm.engine.ExternalTaskService;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.ManagementService;
+import org.camunda.bpm.engine.OptimisticLockingException;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
+import org.camunda.bpm.engine.externaltask.LockedExternalTask;
 import org.camunda.bpm.engine.runtime.Job;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.test.Deployment;
+import org.camunda.bpm.engine.test.assertions.ProcessEngineTests;
 import org.camunda.bpm.engine.variable.Variables;
 import org.camunda.community.process_test_coverage.spring_test.platform7.ProcessEngineCoverageConfiguration;
 import org.junit.jupiter.api.Test;
@@ -29,10 +31,11 @@ import piven.example.camunda7.tasks.TaskCreditService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @SpringBootTest
-@DirtiesContext
 @Import(ProcessEngineCoverageConfiguration.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class LoanApplicationProcessTest {
 
     @Autowired
@@ -53,8 +56,18 @@ class LoanApplicationProcessTest {
     @MockBean
     private TaskCreditService taskCreditService;
 
+    @Autowired
+    private ExternalTaskService externalTaskService;
+
+    private static final long TIMEOUT = 5000;
+
     @Test
-    @Deployment(resources = {"bpmn/loanApplicationProcess.bpmn"})
+    @Deployment(resources = {
+            "bpmn/loanApplicationProcess.bpmn",
+            "bpmn/creditScoringProcess.bpmn",
+            "dmn/loanApprovalDecision.dmn"
+    })
+    @SneakyThrows
     void testNewClientApproved() {
         Map<String, Object> vars = new HashMap<>();
         vars.put("clientId", "77777");
@@ -63,216 +76,226 @@ class LoanApplicationProcessTest {
         vars.put("age", 30);
 
         ProcessInstance pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess", vars);
-        assertNotNull(pi);
 
         completeTask(pi.getId(), "Task_SubmitLoanApplication");
         completeTask(pi.getId(), "Task_UploadDocuments");
+        simulateDocumentsReceived(pi.getId());
 
-        runtimeService.messageEventReceived("Документы получены",
-                runtimeService.createExecutionQuery()
-                        .processInstanceId(pi.getId())
-                        .messageEventSubscriptionName("Документы получены")
-                        .singleResult()
-                        .getId());
 
-        runtimeService.setVariable(pi.getId(), "scoring", 30);
+        var subPi = waitForSubProcess(pi.getId(), TIMEOUT);
+        var task = waitForExternalTask(subPi, "rest", TIMEOUT);
+        externalTaskService.complete(task.getId(), "testWorker", Map.of("scoring", 70));
         runtimeService.setVariable(pi.getId(), "blackList", false);
+        waitForProcessEnd(pi, 5000);
 
-        waitForProcessEnd(pi.getId());
+        var result = historyService.createHistoricVariableInstanceQuery()
+                .processInstanceId(pi.getId())
+                .variableName("approvalResult")
+                .singleResult();
+        assertNotNull(result, "approvalResult не создан!");
+        assertEquals("APPROVED", result.getValue());
     }
 
     @Test
-    @Deployment(resources = {"bpmn/loanApplicationProcess.bpmn"})
-    void testExistingClientRejected() {
-        Map<String, Object> vars = new HashMap<>();
-        vars.put("clientId", "12345");
-        vars.put("isNewClient", false);
-        vars.put("income", 8000);
-        vars.put("age", 25);
+    @Deployment(resources = {
+            "bpmn/loanApplicationProcess.bpmn",
+            "bpmn/creditScoringProcess.bpmn"
+    })
+    void testExistingClientRejected() throws InterruptedException {
+        Map<String, Object> vars = Map.of(
+                "clientId", "12345",
+                "isNewClient", false,
+                "income", 8000,
+                "age", 25
+        );
 
-        ProcessInstance pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess", vars);
-        assertNotNull(pi);
-
+        var pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess", vars);
         completeTask(pi.getId(), "Task_SubmitLoanApplication");
 
-        runtimeService.setVariable(pi.getId(), "scoring", 70);
+        var subPi = waitForSubProcess(pi.getId(), TIMEOUT);
+        var task = waitForExternalTask(subPi, "rest", TIMEOUT);
+
+        externalTaskService.complete(task.getId(), "testWorker", Map.of("scoring", 70));
         runtimeService.setVariable(pi.getId(), "blackList", true);
 
-        waitForProcessEnd(pi.getId());
+        waitForProcessEnd(pi, TIMEOUT);
     }
 
     @Test
     @Deployment(resources = {
             "bpmn/loanApplicationProcess.bpmn",
+            "bpmn/creditScoringProcess.bpmn",
             "dmn/loanApprovalDecision.dmn"
     })
-    void testExistingClient_BlacklistRejection() {
-        given(taskCreditService.getScoring(any())).willReturn(70);
-        var pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
-                withVariables("clientId", "12345", "isNewClient", false));
-
+    void testExistingClient_BlacklistRejection() throws InterruptedException {
+        var pi = runtimeService.startProcessInstanceByKey(
+                "loanApplicationProcess",
+                withVariables("clientId", "12345", "isNewClient", false)
+        );
         completeTask(pi.getId(), "Task_SubmitLoanApplication");
-        waitForProcessEnd(pi.getId());
+
+        var subPi = waitForSubProcess(pi.getId(), TIMEOUT);
+        var task = waitForExternalTask(subPi, "rest", TIMEOUT);
+        externalTaskService.complete(task.getId(), "testWorker", Map.of("scoring", 70));
+
+        runtimeService.setVariable(pi.getId(), "blackList", true);
+        waitForProcessEnd(pi, TIMEOUT);
 
         var result = historyService.createHistoricVariableInstanceQuery()
                 .processInstanceId(pi.getId())
                 .variableName("approvalResult")
                 .singleResult();
-
         assertEquals("REJECTED_BLACKLIST", result.getValue());
     }
 
     @Test
     @Deployment(resources = {
             "bpmn/loanApplicationProcess.bpmn",
+            "bpmn/creditScoringProcess.bpmn",
             "dmn/loanApprovalDecision.dmn"
     })
-    void testExistingClient_Approval() {
-        given(taskCreditService.getScoring(any())).willReturn(80);
-        var pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
-                withVariables(
-                        "clientId", "77777",
-                        "isNewClient", false,
-                        "income", 30000));
-
-        completeTask(pi.getId(), "Task_SubmitLoanApplication");
-        waitForProcessEnd(pi.getId());
-
-        var result = historyService.createHistoricVariableInstanceQuery()
-                .processInstanceId(pi.getId())
-                .variableName("approvalResult")
-                .singleResult();
-
-        assertEquals("APPROVED", result.getValue());
-    }
-
-    @Test
-    @Deployment(resources = {
-            "bpmn/loanApplicationProcess.bpmn",
-            "dmn/loanApprovalDecision.dmn"
-    })
+    @SneakyThrows
     void testExistingClient_ScoringRejection() {
-        given(taskCreditService.getScoring(any())).willReturn(30);
-        var pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
-                withVariables("clientId", "88888", "isNewClient", false));
+        var pi = runtimeService.startProcessInstanceByKey(
+                "loanApplicationProcess",
+                withVariables("clientId", "88888", "isNewClient", false)
+        );
 
         completeTask(pi.getId(), "Task_SubmitLoanApplication");
-        waitForProcessEnd(pi.getId());
+
+        var subPi = waitForSubProcess(pi.getId(), TIMEOUT);
+        var task = waitForExternalTask(subPi, "rest", TIMEOUT);
+        externalTaskService.complete(task.getId(), "testWorker", Map.of("scoring", 30));
+        waitForProcessEnd(pi, TIMEOUT);
 
         var result = historyService.createHistoricVariableInstanceQuery()
                 .processInstanceId(pi.getId())
                 .variableName("approvalResult")
                 .singleResult();
-
         assertEquals("REJECTED_SCORING", result.getValue());
     }
 
     @Test
     @Deployment(resources = {
             "bpmn/loanApplicationProcess.bpmn",
+            "bpmn/creditScoringProcess.bpmn",
             "dmn/loanApprovalDecision.dmn"
     })
+    @SneakyThrows
     void testNewClient_BlacklistRejection() {
-        given(taskCreditService.getScoring(any())).willReturn(70);
-
-        var pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
-                withVariables("clientId", "12345", "isNewClient", true));
+        var pi = runtimeService.startProcessInstanceByKey(
+                "loanApplicationProcess",
+                withVariables("clientId", "12345", "isNewClient", true)
+        );
 
         completeTask(pi.getId(), "Task_SubmitLoanApplication");
         completeTask(pi.getId(), "Task_UploadDocuments");
-
         simulateDocumentsReceived(pi.getId());
-        waitForProcessEnd(pi.getId());
+
+        var subPi = waitForSubProcess(pi.getId(), TIMEOUT);
+        var task = waitForExternalTask(subPi, "rest", TIMEOUT);
+        externalTaskService.complete(task.getId(), "testWorker", Map.of("scoring", 70));
+
+        waitForProcessEnd(pi, TIMEOUT);
 
         var result = historyService.createHistoricVariableInstanceQuery()
                 .processInstanceId(pi.getId())
                 .variableName("approvalResult")
                 .singleResult();
-
         assertEquals("REJECTED_BLACKLIST", result.getValue());
     }
 
     @Test
     @Deployment(resources = {
             "bpmn/loanApplicationProcess.bpmn",
+            "bpmn/creditScoringProcess.bpmn",
             "dmn/loanApprovalDecision.dmn"
     })
+    @SneakyThrows
     void testNewClient_Approval() {
-        given(taskCreditService.getScoring(any())).willReturn(80);
-
-        var pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
-                withVariables(
-                        "clientId", "77777",
-                        "isNewClient", true,
-                        "income", 30000));
+        var pi = runtimeService.startProcessInstanceByKey(
+                "loanApplicationProcess",
+                withVariables("clientId", "77777", "isNewClient", true, "income", 30000)
+        );
 
         completeTask(pi.getId(), "Task_SubmitLoanApplication");
         completeTask(pi.getId(), "Task_UploadDocuments");
-
         simulateDocumentsReceived(pi.getId());
-        waitForProcessEnd(pi.getId());
+
+        var subPi = waitForSubProcess(pi.getId(), TIMEOUT);
+        var task = waitForExternalTask(subPi, "rest", TIMEOUT);
+        externalTaskService.complete(task.getId(), "testWorker", Map.of("scoring", 80));
+
+
+        waitForProcessEnd(pi, TIMEOUT);
 
         var result = historyService.createHistoricVariableInstanceQuery()
                 .processInstanceId(pi.getId())
                 .variableName("approvalResult")
                 .singleResult();
-
         assertEquals("APPROVED", result.getValue());
     }
 
     @Test
     @Deployment(resources = {
             "bpmn/loanApplicationProcess.bpmn",
+            "bpmn/creditScoringProcess.bpmn",
             "dmn/loanApprovalDecision.dmn"
     })
+    @SneakyThrows
     void testNewClient_ScoringRejection() {
-        given(taskCreditService.getScoring(any())).willReturn(30);
-
-        var pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
-                withVariables("clientId", "88888", "isNewClient", true));
+        var pi = runtimeService.startProcessInstanceByKey(
+                "loanApplicationProcess",
+                withVariables("clientId", "88888", "isNewClient", true)
+        );
 
         completeTask(pi.getId(), "Task_SubmitLoanApplication");
         completeTask(pi.getId(), "Task_UploadDocuments");
-
         simulateDocumentsReceived(pi.getId());
-        waitForProcessEnd(pi.getId());
+
+        var subPi = waitForSubProcess(pi.getId(), TIMEOUT);
+        var task = waitForExternalTask(subPi, "rest", TIMEOUT);
+        externalTaskService.complete(task.getId(), "testWorker", Map.of("scoring", 30));
+
+
+        waitForProcessEnd(pi, TIMEOUT);
 
         var result = historyService.createHistoricVariableInstanceQuery()
                 .processInstanceId(pi.getId())
                 .variableName("approvalResult")
                 .singleResult();
-
         assertEquals("REJECTED_SCORING", result.getValue());
     }
 
     @Test
     @Deployment(resources = {
             "bpmn/loanApplicationProcess.bpmn",
+            "bpmn/creditScoringProcess.bpmn",
             "dmn/loanApprovalDecision.dmn"
     })
+    @SneakyThrows
     void testNewClient_DocumentTimeout() {
-        given(taskCreditService.getScoring(any())).willReturn(80);
-        var pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
-                withVariables("clientId", "99999", "isNewClient", true));
+        var pi = runtimeService.startProcessInstanceByKey(
+                "loanApplicationProcess",
+                withVariables("clientId", "99999", "isNewClient", true)
+        );
 
         completeTask(pi.getId(), "Task_SubmitLoanApplication");
         completeTask(pi.getId(), "Task_UploadDocuments");
 
+        // Выполнение таймера DocumentTimeout
         var timerJob = managementService.createJobQuery()
                 .processInstanceId(pi.getId())
                 .timers()
                 .singleResult();
-
-        assertNotNull(timerJob, "Timer job should exist");
-
+        assertNotNull(timerJob, "Timer job должен существовать");
         managementService.executeJob(timerJob.getId());
 
-        waitForProcessEnd(pi.getId());
+        waitForProcessEnd(pi, TIMEOUT);
 
         var process = historyService.createHistoricProcessInstanceQuery()
                 .processInstanceId(pi.getId())
                 .singleResult();
-
         assertNotNull(process);
         assertEquals("COMPLETED", process.getState());
 
@@ -280,32 +303,38 @@ class LoanApplicationProcessTest {
                 .processInstanceId(pi.getId())
                 .activityId("Event_ThreeDays")
                 .singleResult();
-
-        assertNotNull(timeoutEvent, "Process should go through timeout event");
+        assertNotNull(timeoutEvent, "Процесс должен пройти через timeout event");
 
         var rejectionEvent = historyService.createHistoricActivityInstanceQuery()
                 .processInstanceId(pi.getId())
                 .activityId("Event_NotifyRejection")
                 .singleResult();
-
-        assertNotNull(rejectionEvent, "Process should notify about rejection");
+        assertNotNull(rejectionEvent, "Процесс должен уведомить о rejection");
     }
 
     @Test
     @Deployment(resources = {
             "bpmn/loanApplicationProcess.bpmn",
+            "bpmn/creditScoringProcess.bpmn",
             "dmn/loanApprovalDecision.dmn"
     })
+    @SneakyThrows
     void testIncomeRejection() {
-        given(taskCreditService.getScoring(any())).willReturn(70);
-        ProcessInstance pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
+        ProcessInstance pi = runtimeService.startProcessInstanceByKey(
+                "loanApplicationProcess",
                 Variables.createVariables()
                         .putValue("isNewClient", false)
                         .putValue("clientId", "11111")
-                        .putValue("income", 13000));
+                        .putValue("income", 13000)
+        );
 
         completeTask(pi.getId(), "Task_SubmitLoanApplication");
-        waitForProcessEnd(pi.getId());
+
+        var subPi = waitForSubProcess(pi.getId(), TIMEOUT);
+        var task = waitForExternalTask(subPi, "rest", TIMEOUT);
+        externalTaskService.complete(task.getId(), "testWorker", Map.of("scoring", 70));
+
+        waitForProcessEnd(pi, TIMEOUT);
 
         var result = historyService.createHistoricVariableInstanceQuery()
                 .processInstanceId(pi.getId())
@@ -324,16 +353,88 @@ class LoanApplicationProcessTest {
     }
 
     private void simulateDocumentsReceived(String processInstanceId) {
-        runtimeService.createMessageCorrelation("Документы получены")
+        var exec = runtimeService.createExecutionQuery()
                 .processInstanceId(processInstanceId)
-                .correlate();
+                .messageEventSubscriptionName("Документы получены")
+                .singleResult();
+        assertNotNull(exec, "Execution для сообщения не найден!");
+        runtimeService.messageEventReceived("Документы получены", exec.getId());
     }
 
-    private void waitForProcessEnd(String processInstanceId) {
-        await().atMost(15, SECONDS).until(() ->
-                runtimeService.createProcessInstanceQuery()
-                        .processInstanceId(processInstanceId)
-                        .singleResult() == null
-        );
+    private ProcessInstance waitForSubProcess(String superProcessInstanceId, long timeoutMillis) throws InterruptedException {
+        long startTime = System.currentTimeMillis();
+        long interval = 100;
+        ProcessInstance subPi = null;
+
+        while ((System.currentTimeMillis() - startTime) < timeoutMillis) {
+            List<Job> jobs = managementService.createJobQuery()
+                    .processInstanceId(superProcessInstanceId)
+                    .list();
+
+            for (Job job : jobs) {
+                try {
+                    managementService.executeJob(job.getId());
+                } catch (OptimisticLockingException ignored) {
+                    // если другой поток/таск уже выполнил job — не страшно
+                }
+            }
+
+            subPi = runtimeService.createProcessInstanceQuery()
+                    .superProcessInstanceId(superProcessInstanceId)
+                    .singleResult();
+
+            if (subPi != null) {break;}
+
+            Thread.sleep(interval);
+        }
+
+        assertNotNull(subPi, "Call Activity не создала подпроцесс!");
+        return subPi;
+    }
+
+    private LockedExternalTask waitForExternalTask(ProcessInstance pi, String topic, long timeoutMillis) throws InterruptedException {
+        long startTime = System.currentTimeMillis();
+        List<LockedExternalTask> tasks;
+
+        while ((System.currentTimeMillis() - startTime) < timeoutMillis) {
+            tasks = externalTaskService.fetchAndLock(10, "testWorker")
+                    .topic(topic, 1000)
+                    .execute()
+                    .stream()
+                    .filter(t -> t.getProcessInstanceId().equals(pi.getId()))
+                    .collect(Collectors.toList());
+
+            if (!tasks.isEmpty()) {return tasks.get(0);}
+            Thread.sleep(100);
+        }
+
+        fail("External Task не найден!");
+        return null;
+    }
+
+    private void waitForProcessEnd(ProcessInstance pi, long timeoutMillis) throws InterruptedException {
+        long startTime = System.currentTimeMillis();
+        long interval = 100;
+
+        while ((System.currentTimeMillis() - startTime) < timeoutMillis) {
+            List<Job> jobs = managementService.createJobQuery()
+                    .processInstanceId(pi.getId())
+                    .list();
+
+            for (Job job : jobs) {
+                try {
+                    managementService.executeJob(job.getId());
+                } catch (OptimisticLockingException ignored) {}
+            }
+
+            boolean ended = runtimeService.createProcessInstanceQuery()
+                    .processInstanceId(pi.getId())
+                    .singleResult() == null;
+
+            if (ended) {break;}
+            Thread.sleep(interval);
+        }
+
+        ProcessEngineTests.assertThat(pi).isEnded();
     }
 }

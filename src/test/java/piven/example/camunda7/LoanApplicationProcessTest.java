@@ -1,8 +1,22 @@
 package piven.example.camunda7;
 
-import org.camunda.bpm.engine.*;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
+import static org.camunda.bpm.engine.test.assertions.bpmn.BpmnAwareTests.withVariables;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+
+import org.camunda.bpm.engine.DecisionService;
+import org.camunda.bpm.engine.HistoryService;
+import org.camunda.bpm.engine.ManagementService;
+import org.camunda.bpm.engine.RuntimeService;
+import org.camunda.bpm.engine.TaskService;
+import org.camunda.bpm.engine.runtime.Job;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.test.Deployment;
+import org.camunda.bpm.engine.variable.Variables;
 import org.camunda.community.process_test_coverage.spring_test.platform7.ProcessEngineCoverageConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,19 +24,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import piven.example.camunda7.tasks.TaskCreditService;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.awaitility.Awaitility.await;
-import static org.camunda.bpm.engine.test.assertions.bpmn.BpmnAwareTests.assertThat;
-import static org.camunda.bpm.engine.test.assertions.bpmn.BpmnAwareTests.withVariables;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
 
 @SpringBootTest
 @DirtiesContext
@@ -102,8 +108,6 @@ class LoanApplicationProcessTest {
     })
     void testExistingClient_BlacklistRejection() {
         given(taskCreditService.getScoring(any())).willReturn(70);
-        given(taskCreditService.getBlackList(any())).willReturn(true);
-
         var pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
                 withVariables("clientId", "12345", "isNewClient", false));
 
@@ -125,10 +129,11 @@ class LoanApplicationProcessTest {
     })
     void testExistingClient_Approval() {
         given(taskCreditService.getScoring(any())).willReturn(80);
-        given(taskCreditService.getBlackList(any())).willReturn(false);
-
         var pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
-                withVariables("clientId", "77777", "isNewClient", false));
+                withVariables(
+                        "clientId", "77777",
+                        "isNewClient", false,
+                        "income", 30000));
 
         completeTask(pi.getId(), "Task_SubmitLoanApplication");
         waitForProcessEnd(pi.getId());
@@ -148,8 +153,6 @@ class LoanApplicationProcessTest {
     })
     void testExistingClient_ScoringRejection() {
         given(taskCreditService.getScoring(any())).willReturn(30);
-        given(taskCreditService.getBlackList(any())).willReturn(false);
-
         var pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
                 withVariables("clientId", "88888", "isNewClient", false));
 
@@ -171,7 +174,6 @@ class LoanApplicationProcessTest {
     })
     void testNewClient_BlacklistRejection() {
         given(taskCreditService.getScoring(any())).willReturn(70);
-        given(taskCreditService.getBlackList(any())).willReturn(true);
 
         var pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
                 withVariables("clientId", "12345", "isNewClient", true));
@@ -197,10 +199,12 @@ class LoanApplicationProcessTest {
     })
     void testNewClient_Approval() {
         given(taskCreditService.getScoring(any())).willReturn(80);
-        given(taskCreditService.getBlackList(any())).willReturn(false);
 
         var pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
-                withVariables("clientId", "77777", "isNewClient", true));
+                withVariables(
+                        "clientId", "77777",
+                        "isNewClient", true,
+                        "income", 30000));
 
         completeTask(pi.getId(), "Task_SubmitLoanApplication");
         completeTask(pi.getId(), "Task_UploadDocuments");
@@ -223,7 +227,6 @@ class LoanApplicationProcessTest {
     })
     void testNewClient_ScoringRejection() {
         given(taskCreditService.getScoring(any())).willReturn(30);
-        given(taskCreditService.getBlackList(any())).willReturn(false);
 
         var pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
                 withVariables("clientId", "88888", "isNewClient", true));
@@ -249,8 +252,6 @@ class LoanApplicationProcessTest {
     })
     void testNewClient_DocumentTimeout() {
         given(taskCreditService.getScoring(any())).willReturn(80);
-        given(taskCreditService.getBlackList(any())).willReturn(false);
-
         var pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
                 withVariables("clientId", "99999", "isNewClient", true));
 
@@ -288,6 +289,29 @@ class LoanApplicationProcessTest {
                 .singleResult();
 
         assertNotNull(rejectionEvent, "Process should notify about rejection");
+    }
+
+    @Test
+    @Deployment(resources = {
+            "bpmn/loanApplicationProcess.bpmn",
+            "dmn/loanApprovalDecision.dmn"
+    })
+    void testIncomeRejection() {
+        given(taskCreditService.getScoring(any())).willReturn(70);
+        ProcessInstance pi = runtimeService.startProcessInstanceByKey("loanApplicationProcess",
+                Variables.createVariables()
+                        .putValue("isNewClient", false)
+                        .putValue("clientId", "11111")
+                        .putValue("income", 13000));
+
+        completeTask(pi.getId(), "Task_SubmitLoanApplication");
+        waitForProcessEnd(pi.getId());
+
+        var result = historyService.createHistoricVariableInstanceQuery()
+                .processInstanceId(pi.getId())
+                .variableName("approvalResult")
+                .singleResult();
+        assertEquals("REJECTED_INCOME", result.getValue());
     }
 
     private void completeTask(String processInstanceId, String taskDefinitionKey) {

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0pf2oo1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.15.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.19.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0pf2oo1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.39.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.19.0">
   <bpmn:message id="Message_178s6rp" name="Документы получены" />
   <bpmn:message id="Message_1bj6jg7" name="Отказано" />
   <bpmn:message id="Message_19d2dfq" name="Одобрено" />
@@ -54,13 +54,14 @@
         <camunda:executionListener delegateExpression="${processLogger}" event="end" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_ToBlacklistCheck</bpmn:incoming>
-      <bpmn:outgoing>Flow_BlacklistCheckToMerge</bpmn:outgoing>
+      <bpmn:outgoing>Flow_BlacklistCheckWithoutErrors</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:businessRuleTask id="Task_ApprovalDecision" name="Одобрить/отклонить" camunda:resultVariable="approvalResult" camunda:decisionRef="loanApprovalDecision" camunda:mapDecisionResult="singleEntry">
       <bpmn:extensionElements>
         <camunda:inputOutput>
           <camunda:inputParameter name="blackList">${execution.getVariable("blackList")}</camunda:inputParameter>
           <camunda:inputParameter name="scoring">${execution.getVariable("scoring")}</camunda:inputParameter>
+          <camunda:inputParameter name="income">${execution.getVariable("income")}</camunda:inputParameter>
         </camunda:inputOutput>
         <camunda:executionListener delegateExpression="${processLogger}" event="end" />
       </bpmn:extensionElements>
@@ -80,7 +81,7 @@
         <camunda:executionListener delegateExpression="${processLogger}" event="end" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_CreditScoringToMerge</bpmn:incoming>
-      <bpmn:incoming>Flow_BlacklistCheckToMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_0es21l8</bpmn:incoming>
       <bpmn:outgoing>Flow_ToApprovalDecision</bpmn:outgoing>
     </bpmn:parallelGateway>
     <bpmn:intermediateThrowEvent id="Event_NotifyApproval" name="Уведомить об одобрении">
@@ -131,7 +132,9 @@
     <bpmn:sequenceFlow id="Flow_ToCreditScoring" sourceRef="Gateway_ParallelChecks" targetRef="Task_CreditScoring" />
     <bpmn:sequenceFlow id="Flow_CreditScoringToMerge" sourceRef="Task_CreditScoring" targetRef="Gateway_MergeChecks" />
     <bpmn:sequenceFlow id="Flow_ToBlacklistCheck" sourceRef="Gateway_ParallelChecks" targetRef="Task_BlacklistCheck" />
-    <bpmn:sequenceFlow id="Flow_BlacklistCheckToMerge" sourceRef="Task_BlacklistCheck" targetRef="Gateway_MergeChecks" />
+    <bpmn:sequenceFlow id="Flow_BlacklistCheckWithoutErrors" sourceRef="Task_BlacklistCheck" targetRef="Gateway_MergeBlacklist">
+      <bpmn:extensionElements />
+    </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_ToApprovalDecision" sourceRef="Gateway_MergeChecks" targetRef="Task_ApprovalDecision" />
     <bpmn:sequenceFlow id="Flow_ApprovalToGateway" sourceRef="Task_ApprovalDecision" targetRef="Gateway_IsApproved" />
     <bpmn:sequenceFlow id="Flow_ApprovalNotification" name="да" sourceRef="Gateway_IsApproved" targetRef="Event_NotifyApproval">
@@ -140,15 +143,37 @@
     <bpmn:sequenceFlow id="Flow_NotificationsToEndGatewayApproved" sourceRef="Event_NotifyApproval" targetRef="Gateway_MergeNotifications" />
     <bpmn:sequenceFlow id="Flow_ThreeDaysToRejectNotification" sourceRef="Event_ThreeDays" targetRef="Event_NotifyRejection" />
     <bpmn:sequenceFlow id="Flow_RejectNotification" name="нет" sourceRef="Gateway_IsApproved" targetRef="Event_NotifyRejection">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approvalResult == "REJECTED_BLACKLIST" or approvalResult == "REJECTED_SCORING"}</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approvalResult != "APPROVED"}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_NotificationsToEndGatewayRejected" sourceRef="Event_NotifyRejection" targetRef="Gateway_MergeNotifications" />
     <bpmn:sequenceFlow id="Flow_ToEndEvent" sourceRef="Gateway_MergeNotifications" targetRef="EndEvent_LoanProcessCompleted" />
+    <bpmn:boundaryEvent id="BoundaryError_BlackListCheck" attachedToRef="Task_BlacklistCheck">
+      <bpmn:extensionElements>
+        <camunda:executionListener delegateExpression="${processLogger}" event="end" />
+      </bpmn:extensionElements>
+      <bpmn:outgoing>Flow_ToBlacklistErrorHandler</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_07z7xh8" errorRef="Error_BLCheck" camunda:errorCodeVariable="loanErrorCode" camunda:errorMessageVariable="loanErrorMessage" />
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_ToBlacklistErrorHandler" sourceRef="BoundaryError_BlackListCheck" targetRef="Task_BlacklistErrorHandler" />
+    <bpmn:sequenceFlow id="Flow_BlacklistCheckWithErrors" sourceRef="Task_BlacklistErrorHandler" targetRef="Gateway_MergeBlacklist" />
+    <bpmn:serviceTask id="Task_BlacklistErrorHandler" name="Обработка ошибки ЧС" camunda:asyncBefore="true" camunda:delegateExpression="${blacklistErrorHandler}">
+      <bpmn:extensionElements>
+        <camunda:executionListener delegateExpression="${processLogger}" event="end" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ToBlacklistErrorHandler</bpmn:incoming>
+      <bpmn:outgoing>Flow_BlacklistCheckWithErrors</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_MergeBlacklist">
+      <bpmn:incoming>Flow_BlacklistCheckWithErrors</bpmn:incoming>
+      <bpmn:incoming>Flow_BlacklistCheckWithoutErrors</bpmn:incoming>
+      <bpmn:outgoing>Flow_0es21l8</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_0es21l8" sourceRef="Gateway_MergeBlacklist" targetRef="Gateway_MergeChecks" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNloanApplicationProcess">
     <bpmndi:BPMNPlane id="BPMNPlane_LoanApplicationProcess" bpmnElement="Collaboration_0u3m2r6">
       <bpmndi:BPMNShape id="Participant_1ds5upl_di" bpmnElement="Participant_1ds5upl" isHorizontal="true">
-        <dc:Bounds x="129" y="60" width="1610" height="440" />
+        <dc:Bounds x="129" y="60" width="1610" height="550" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="_BPMNShape_SStartEvent_LoanApplication" bpmnElement="StartEvent_LoanApplication">
@@ -237,6 +262,16 @@
       <bpmndi:BPMNShape id="Event_11vcz2z_di" bpmnElement="EndEvent_LoanProcessCompleted">
         <dc:Bounds x="1682" y="279" width="36" height="36" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0nbnf1n_di" bpmnElement="Task_BlacklistErrorHandler">
+        <dc:Bounds x="990" y="500" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1ijz7ed_di" bpmnElement="Gateway_MergeBlacklist" isMarkerVisible="true">
+        <dc:Bounds x="1085" y="365" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0dnn099_di" bpmnElement="BoundaryError_BlackListCheck">
+        <dc:Bounds x="1022" y="412" width="36" height="36" />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_01x9l46_di" bpmnElement="Flow_StartToSubmitLoan">
         <di:waypoint x="215" y="297" />
         <di:waypoint x="270" y="297" />
@@ -297,10 +332,9 @@
         <di:waypoint x="870" y="390" />
         <di:waypoint x="940" y="390" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_18ojyir_di" bpmnElement="Flow_BlacklistCheckToMerge">
+      <bpmndi:BPMNEdge id="Flow_18ojyir_di" bpmnElement="Flow_BlacklistCheckWithoutErrors">
         <di:waypoint x="1040" y="390" />
-        <di:waypoint x="1110" y="390" />
-        <di:waypoint x="1110" y="322" />
+        <di:waypoint x="1085" y="390" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_00z8oz3_di" bpmnElement="Flow_ToApprovalDecision">
         <di:waypoint x="1135" y="297" />
@@ -336,7 +370,7 @@
         <di:waypoint x="1340" y="230" />
         <di:waypoint x="1422" y="230" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1346" y="248" width="18" height="14" />
+          <dc:Bounds x="1347" y="248" width="17" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_13acb5k_di" bpmnElement="Flow_NotificationsToEndGatewayRejected">
@@ -350,6 +384,19 @@
       <bpmndi:BPMNEdge id="Flow_057tvrt_di" bpmnElement="Flow_ToEndEvent">
         <di:waypoint x="1595" y="297" />
         <di:waypoint x="1682" y="297" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0h5ffid_di" bpmnElement="Flow_ToBlacklistErrorHandler">
+        <di:waypoint x="1040" y="448" />
+        <di:waypoint x="1040" y="500" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11m3ac2_di" bpmnElement="Flow_BlacklistCheckWithErrors">
+        <di:waypoint x="1090" y="540" />
+        <di:waypoint x="1110" y="540" />
+        <di:waypoint x="1110" y="415" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0es21l8_di" bpmnElement="Flow_0es21l8">
+        <di:waypoint x="1110" y="365" />
+        <di:waypoint x="1110" y="322" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

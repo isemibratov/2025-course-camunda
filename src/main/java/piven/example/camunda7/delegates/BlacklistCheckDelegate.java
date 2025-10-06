@@ -20,7 +20,7 @@ public class BlacklistCheckDelegate implements JavaDelegate {
         if (Boolean.TRUE.equals(execution.getVariable("forceBlacklistError"))) {
             if (execution.getVariable("errorAlreadyThrown") == null) {
                 execution.setVariable("errorAlreadyThrown", true);
-                execution.setVariable("loanErrorCode", "BLACKLIST_CHECK_ERROR");
+                execution.setVariable("loanErrorCode", BLACKLIST_CHECK_ERROR);
                 execution.setVariable("loanErrorMessage", "Тестовая ошибка API ЧС");
                 throw new BpmnError(BLACKLIST_CHECK_ERROR, "Тестовая ошибка API ЧС");
             } else {
@@ -28,18 +28,13 @@ public class BlacklistCheckDelegate implements JavaDelegate {
             }
         }
 
-        try {
-
-            var blackList = Arrays.asList("12345", "99999", "ABC001");
-            var isBlackListed = blackList.contains(clientId);
-            execution.setVariable("isBlackListed", isBlackListed);
-            execution.setVariable("blackList", isBlackListed);
-
-        } catch (Exception e) {
+        var blackList = Arrays.asList("12345", "99999", "ABC001");
+        if (blackList.contains(clientId)) {
             execution.setVariable("loanErrorCode", BLACKLIST_CHECK_ERROR);
-            execution.setVariable("loanErrorMessage", e.getMessage());
-            throw new BpmnError(BLACKLIST_CHECK_ERROR,
-                    "Ошибка вызова API ЧС: " + e.getMessage());
+            execution.setVariable("loanErrorMessage", "Клиент найден в ЧС");
+            throw new BpmnError(BLACKLIST_CHECK_ERROR, "Клиент в ЧС");
         }
+
+        execution.setVariable("blackList", false);
     }
 }

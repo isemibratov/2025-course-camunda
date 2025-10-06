@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
-             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/"
-             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
-             xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/"
-             id="definitions_loan_rules"
-             name="LoanRules"
-             namespace="http://camunda.org/schema/1.0/dmn">
-
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" id="definitions_loan_rules" name="LoanRules" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.39.0">
   <decision id="loanApprovalDecision" name="Loan Approval Decision">
     <decisionTable id="decisionTable_loan">
       <input id="input_blacklist" label="Blacklist check">
@@ -19,10 +12,12 @@
           <text>scoring</text>
         </inputExpression>
       </input>
-
-      <output id="output_approval" label="Approval result" typeRef="string"/>
-
-      <!-- Правила -->
+      <input id="InputClause_0fuk9sz" label="Income value">
+        <inputExpression id="LiteralExpression_1sa3n83" typeRef="integer">
+          <text>income</text>
+        </inputExpression>
+      </input>
+      <output id="output_approval" label="Approval result" typeRef="string" />
       <rule id="rule1">
         <inputEntry id="inputEntry1_blacklist">
           <text>true</text>
@@ -30,11 +25,13 @@
         <inputEntry id="inputEntry1_scoring">
           <text>-</text>
         </inputEntry>
+        <inputEntry id="UnaryTests_0qx2swh">
+          <text></text>
+        </inputEntry>
         <outputEntry id="outputEntry1">
           <text>"REJECTED_BLACKLIST"</text>
         </outputEntry>
       </rule>
-
       <rule id="rule2">
         <inputEntry id="inputEntry2_blacklist">
           <text>false</text>
@@ -42,11 +39,13 @@
         <inputEntry id="inputEntry2_scoring">
           <text>&lt; 50</text>
         </inputEntry>
+        <inputEntry id="UnaryTests_1vfufn6">
+          <text></text>
+        </inputEntry>
         <outputEntry id="outputEntry2">
           <text>"REJECTED_SCORING"</text>
         </outputEntry>
       </rule>
-
       <rule id="rule3">
         <inputEntry id="inputEntry3_blacklist">
           <text>false</text>
@@ -54,12 +53,27 @@
         <inputEntry id="inputEntry3_scoring">
           <text>&gt;= 50</text>
         </inputEntry>
+        <inputEntry id="UnaryTests_0db7wqi">
+          <text>&lt; 30000</text>
+        </inputEntry>
         <outputEntry id="outputEntry3">
+          <text>"REJECTED_INCOME"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0vxns0s">
+        <inputEntry id="UnaryTests_1nstvqh">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1783wlb">
+          <text>&gt;= 50</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_01ch3xk">
+          <text>&gt;= 30000</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0m2d0h5">
           <text>"APPROVED"</text>
         </outputEntry>
       </rule>
-
     </decisionTable>
   </decision>
-
 </definitions>

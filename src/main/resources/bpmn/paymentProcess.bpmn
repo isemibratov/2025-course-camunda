@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_19byja1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.15.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.19.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_19byja1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.39.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.19.0">
   <bpmn:collaboration id="Collaboration_0ietaej">
-    <bpmn:participant id="Participant_191iq4g" name="Платеж" processRef="paymentProcess" />
+    <bpmn:participant id="Participant_Payment" name="Платеж" processRef="paymentProcess" />
+    <bpmn:participant id="Participant_Document" name="Обработка документов" processRef="documentProcess" />
   </bpmn:collaboration>
   <bpmn:process id="paymentProcess" name="Платёжный процесс" isExecutable="true" camunda:historyTimeToLive="P1D">
+    <bpmn:laneSet id="LaneSet_14r0m9v" />
     <bpmn:startEvent id="StartEvent_1" name="Получен платёж">
       <bpmn:extensionElements>
         <camunda:executionListener delegateExpression="${processLogger}" event="start" />
@@ -29,6 +31,7 @@
           <camunda:inputParameter name="retryResponseTimeout">${bpmUtil.retryResponseTimeout}</camunda:inputParameter>
           <camunda:inputParameter name="retryCount">${bpmUtil.retryCount}</camunda:inputParameter>
         </camunda:inputOutput>
+        <camunda:failedJobRetryTimeCycle>R3/PT5S</camunda:failedJobRetryTimeCycle>
         <camunda:executionListener delegateExpression="${processLogger}" event="end" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_004cqad</bpmn:incoming>
@@ -61,6 +64,8 @@
     <bpmn:serviceTask id="ServiceTask_Validate" name="Проверка данных платежа" camunda:expression="${paymentService.validatePayment(execution)}">
       <bpmn:extensionElements>
         <camunda:executionListener delegateExpression="${processLogger}" event="start" />
+        <camunda:failedJobRetryTimeCycle>R3/PT5S</camunda:failedJobRetryTimeCycle>
+        <camunda:executionListener delegateExpression="${processLogger}" event="end" />
       </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_Validation</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_2</bpmn:outgoing>
@@ -68,6 +73,8 @@
     <bpmn:serviceTask id="ServiceTask_Notification" name="Отправить уведомление" camunda:expression="${notificationService.sendLargeAmountNotification(execution)}">
       <bpmn:extensionElements>
         <camunda:executionListener delegateExpression="${processLogger}" event="start" />
+        <camunda:failedJobRetryTimeCycle>R3/PT5S</camunda:failedJobRetryTimeCycle>
+        <camunda:executionListener delegateExpression="${processLogger}" event="end" />
       </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_Notification</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_ToValidation</bpmn:outgoing>
@@ -75,6 +82,8 @@
     <bpmn:serviceTask id="ServiceTask_Timeout" name="Обработать таймаут" camunda:expression="${paymentService.handleTimeout(execution)}">
       <bpmn:extensionElements>
         <camunda:executionListener delegateExpression="${processLogger}" event="start" />
+        <camunda:failedJobRetryTimeCycle>R3/PT5S</camunda:failedJobRetryTimeCycle>
+        <camunda:executionListener delegateExpression="${processLogger}" event="end" />
       </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_Timeout</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_ToReject</bpmn:outgoing>
@@ -82,6 +91,8 @@
     <bpmn:intermediateCatchEvent id="TimerEvent_3Days" name="3 дня">
       <bpmn:extensionElements>
         <camunda:executionListener delegateExpression="${processLogger}" event="start" />
+        <camunda:failedJobRetryTimeCycle>R3/PT5S</camunda:failedJobRetryTimeCycle>
+        <camunda:executionListener delegateExpression="${processLogger}" event="end" />
       </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_Timer</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_Timeout</bpmn:outgoing>
@@ -132,6 +143,8 @@
     <bpmn:serviceTask id="ServiceTask_Reject" name="Заблокировать платёж" camunda:expression="${paymentService.rejectPayment(execution)}">
       <bpmn:extensionElements>
         <camunda:executionListener delegateExpression="${processLogger}" event="start" />
+        <camunda:failedJobRetryTimeCycle>R3/PT5S</camunda:failedJobRetryTimeCycle>
+        <camunda:executionListener delegateExpression="${processLogger}" event="end" />
       </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_Reject</bpmn:incoming>
       <bpmn:incoming>SequenceFlow_ToReject</bpmn:incoming>
@@ -156,9 +169,29 @@
     </bpmn:intermediateCatchEvent>
   </bpmn:process>
   <bpmn:message id="Message_3a9auqq" name="Документ получен" />
+  <bpmn:process id="documentProcess" isExecutable="true">
+    <bpmn:startEvent id="StartMessageEvent" name="Документ получен">
+      <bpmn:outgoing>Flow_000enye</bpmn:outgoing>
+      <bpmn:messageEventDefinition messageRef="Message_3a9auqq" />
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="ServiceTask_ProcessDocument" name="Обработать документ" camunda:expression="${documentService.processDocument(execution)}">
+      <bpmn:extensionElements>
+        <camunda:executionListener delegateExpression="${processLogger}" event="start" />
+        <camunda:failedJobRetryTimeCycle>R3/PT5S</camunda:failedJobRetryTimeCycle>
+        <camunda:executionListener delegateExpression="${processLogger}" event="end" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_000enye</bpmn:incoming>
+      <bpmn:outgoing>Flow_0e8fl43</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="EndEvent_DocumentProcessed">
+      <bpmn:incoming>Flow_0e8fl43</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_000enye" sourceRef="StartMessageEvent" targetRef="ServiceTask_ProcessDocument" />
+    <bpmn:sequenceFlow id="Flow_0e8fl43" sourceRef="ServiceTask_ProcessDocument" targetRef="EndEvent_DocumentProcessed" />
+  </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0ietaej">
-      <bpmndi:BPMNShape id="Participant_191iq4g_di" bpmnElement="Participant_191iq4g" isHorizontal="true">
+      <bpmndi:BPMNShape id="Participant_191iq4g_di" bpmnElement="Participant_Payment" isHorizontal="true">
         <dc:Bounds x="160" y="59" width="1350" height="421" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
@@ -318,6 +351,27 @@
       <bpmndi:BPMNEdge id="Flow_01y1zag_di" bpmnElement="Flow_01y1zag">
         <di:waypoint x="1385" y="220" />
         <di:waypoint x="1452" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_12fxjp2_di" bpmnElement="Participant_Document" isHorizontal="true" isExpanded="true">
+        <dc:Bounds x="550" y="520" width="490" height="250" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0fe7xpy_di" bpmnElement="StartMessageEvent">
+        <dc:Bounds x="622" y="632" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1c5dlsc_di" bpmnElement="ServiceTask_ProcessDocument">
+        <dc:Bounds x="750" y="610" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1uwdxq6_di" bpmnElement="EndEvent_DocumentProcessed">
+        <dc:Bounds x="962" y="632" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_000enye_di" bpmnElement="Flow_000enye">
+        <di:waypoint x="658" y="650" />
+        <di:waypoint x="750" y="650" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0e8fl43_di" bpmnElement="Flow_0e8fl43">
+        <di:waypoint x="850" y="650" />
+        <di:waypoint x="962" y="650" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

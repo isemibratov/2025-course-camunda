@@ -99,10 +99,8 @@ class EventProcessingProcessTest {
                 .toList();
 
         Assertions.assertThat(activityIds)
-                .contains("PrepareServiceResultPositive", "PublicationStartServiceResultPositive",
-                        "EndServiceResultPositive", "PublicationEndServiceResultPositive", "SaveServiceResultPositive")
-                .doesNotContain("PrepareServiceResultNegative", "PublicationStartServiceResultNegative",
-                        "EndServiceResultNegative", "PublicationEndServiceResultNegative", "SaveServiceResultNegative");
+                .contains("Call_ProcessResultPos")
+                .doesNotContain("Call_ProcessResultNeg");
     }
 
     @Test
@@ -139,10 +137,8 @@ class EventProcessingProcessTest {
                 .toList();
 
         Assertions.assertThat(activityIds)
-                .contains("PrepareServiceResultNegative", "PublicationStartServiceResultNegative",
-                        "EndServiceResultNegative", "PublicationEndServiceResultNegative", "SaveServiceResultNegative")
-                .doesNotContain("PrepareServiceResultPositive", "PublicationStartServiceResultPositive",
-                        "EndServiceResultPositive", "PublicationEndServiceResultPositive", "SaveServiceResultPositive");
+                .contains("Call_ProcessResultNeg")
+                .doesNotContain("Call_ProcessResultPos");
     }
 
     @Test
@@ -180,10 +176,7 @@ class EventProcessingProcessTest {
                 .toList();
 
         Assertions.assertThat(activityIds)
-                .contains("PrepareServiceResultPositive", "PublicationStartServiceResultPositive",
-                        "EndServiceResultPositive", "PublicationEndServiceResultPositive", "SaveServiceResultPositive",
-                        "PrepareServiceResultNegative", "PublicationStartServiceResultNegative",
-                        "EndServiceResultNegative", "PublicationEndServiceResultNegative", "SaveServiceResultNegative");
+                .contains("Call_ProcessResultPos");
     }
 
     @Test
@@ -255,30 +248,23 @@ class EventProcessingProcessTest {
     @Test
     void testGatewayRouting_Positive() {
         testGatewayRouting("POSITIVE",
-                List.of("PrepareServiceResultPositive", "PublicationStartServiceResultPositive",
-                        "EndServiceResultPositive", "PublicationEndServiceResultPositive", "SaveServiceResultPositive"),
-                List.of("PrepareServiceResultNegative", "PublicationStartServiceResultNegative",
-                        "EndServiceResultNegative", "PublicationEndServiceResultNegative", "SaveServiceResultNegative")
+                List.of("Call_ProcessResultPos"),
+                List.of("Call_ProcessResultNeg")
         );
     }
 
     @Test
     void testGatewayRouting_Negative() {
         testGatewayRouting("NEGATIVE",
-                List.of("PrepareServiceResultNegative", "PublicationStartServiceResultNegative",
-                        "EndServiceResultNegative", "PublicationEndServiceResultNegative", "SaveServiceResultNegative"),
-                List.of("PrepareServiceResultPositive", "PublicationStartServiceResultPositive",
-                        "EndServiceResultPositive", "PublicationEndServiceResultPositive", "SaveServiceResultPositive")
+                List.of("Call_ProcessResultNeg"),
+                List.of("Call_ProcessResultPos")
         );
     }
 
     @Test
     void testGatewayRouting_Natural() {
         testGatewayRouting("NATURAL",
-                List.of("PrepareServiceResultPositive", "PublicationStartServiceResultPositive",
-                        "EndServiceResultPositive", "PublicationEndServiceResultPositive", "SaveServiceResultPositive",
-                        "PrepareServiceResultNegative", "PublicationStartServiceResultNegative",
-                        "EndServiceResultNegative", "PublicationEndServiceResultNegative", "SaveServiceResultNegative"),
+                List.of("Call_ProcessResultPos"),
                 List.of()
         );
     }

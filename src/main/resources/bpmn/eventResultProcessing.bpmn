@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_18s5n93" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.39.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.23.0">
+  <bpmn:process id="eventResultProcessing" isExecutable="true">
+    <bpmn:startEvent id="SubProcessStart">
+      <bpmn:outgoing>Flow_1jvxahf</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:callActivity id="Activity_10kgm0j" name="Подготовка ответа" camunda:asyncAfter="true" calledElement="eventPrepare">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="requestId">${execution.getVariable("requestId_StartPrepare")}</camunda:inputParameter>
+          <camunda:inputParameter name="response">${execution.getVariable("response_StartPrepare")}</camunda:inputParameter>
+          <camunda:inputParameter name="status">${execution.getVariable("status")}</camunda:inputParameter>
+          <camunda:inputParameter name="type">${execution.getVariable("type_StartPrepare")}</camunda:inputParameter>
+          <camunda:inputParameter name="enabled">true</camunda:inputParameter>
+        </camunda:inputOutput>
+        <camunda:in businessKey="#{execution.processBusinessKey}" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1jvxahf</bpmn:incoming>
+      <bpmn:outgoing>Flow_1e0hqtw</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:callActivity id="Activity_0qx2idf" name="Публикация" camunda:asyncAfter="true" calledElement="eventPublication">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="requestId">${execution.getVariable("requestId_StartPublication")}</camunda:inputParameter>
+          <camunda:inputParameter name="response">${execution.getVariable("response_StartPublication")}</camunda:inputParameter>
+          <camunda:inputParameter name="status">${execution.getVariable("status")}</camunda:inputParameter>
+          <camunda:inputParameter name="type">${execution.getVariable("type_StartPublication")}</camunda:inputParameter>
+          <camunda:inputParameter name="mapResponse">${execution.getVariable("mapResponse_StartPublication")}</camunda:inputParameter>
+        </camunda:inputOutput>
+        <camunda:in businessKey="#{execution.processBusinessKey}" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1e0hqtw</bpmn:incoming>
+      <bpmn:outgoing>Flow_14ew7hx</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:callActivity id="Activity_03zhjbh" name="Подготовка ответа" camunda:asyncAfter="true" calledElement="eventPrepare">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="requestId">${execution.getVariable("requestId_EndPrepare")}</camunda:inputParameter>
+          <camunda:inputParameter name="response">${execution.getVariable("response_EndPrepare")}</camunda:inputParameter>
+          <camunda:inputParameter name="status">${execution.getVariable("status")}</camunda:inputParameter>
+          <camunda:inputParameter name="type">${execution.getVariable("type_EndPrepare")}</camunda:inputParameter>
+          <camunda:inputParameter name="responseAlias">${execution.getVariable("responseAliasValue")}</camunda:inputParameter>
+        </camunda:inputOutput>
+        <camunda:in businessKey="#{execution.processBusinessKey}" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_14ew7hx</bpmn:incoming>
+      <bpmn:outgoing>Flow_19cprdh</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:callActivity id="Activity_0zixmx9" name="Публикация" camunda:asyncAfter="true" calledElement="eventPublication">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="requestId">${execution.getVariable("requestId_EndPublication")}</camunda:inputParameter>
+          <camunda:inputParameter name="response">${execution.getVariable("response_EndPublication")}</camunda:inputParameter>
+          <camunda:inputParameter name="status">${execution.getVariable("status")}</camunda:inputParameter>
+          <camunda:inputParameter name="type">${execution.getVariable("type_EndPublication")}</camunda:inputParameter>
+          <camunda:inputParameter name="mapResponse">${execution.getVariable("mapResponse_EndPublication")}</camunda:inputParameter>
+        </camunda:inputOutput>
+        <camunda:in businessKey="#{execution.processBusinessKey}" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_19cprdh</bpmn:incoming>
+      <bpmn:outgoing>Flow_0cq8i3y</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:callActivity id="Activity_1enxkb2" name="Сохранение" camunda:asyncAfter="true" calledElement="eventSave">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="requestId">${execution.getVariable("requestId_Save")}</camunda:inputParameter>
+          <camunda:inputParameter name="response">${execution.getVariable("response_Save")}</camunda:inputParameter>
+          <camunda:inputParameter name="scenario">${execution.getVariable("scenario")}</camunda:inputParameter>
+          <camunda:inputParameter name="type">${execution.getVariable("type_Save")}</camunda:inputParameter>
+          <camunda:inputParameter name="mapResponse">${execution.getVariable("mapResponse_Save")}</camunda:inputParameter>
+        </camunda:inputOutput>
+        <camunda:in businessKey="#{execution.processBusinessKey}" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0cq8i3y</bpmn:incoming>
+      <bpmn:outgoing>Flow_1qq7if7</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:endEvent id="Event_0zazrkc">
+      <bpmn:incoming>Flow_1qq7if7</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1jvxahf" sourceRef="SubProcessStart" targetRef="Activity_10kgm0j" />
+    <bpmn:sequenceFlow id="Flow_1e0hqtw" sourceRef="Activity_10kgm0j" targetRef="Activity_0qx2idf" />
+    <bpmn:sequenceFlow id="Flow_14ew7hx" sourceRef="Activity_0qx2idf" targetRef="Activity_03zhjbh" />
+    <bpmn:sequenceFlow id="Flow_19cprdh" sourceRef="Activity_03zhjbh" targetRef="Activity_0zixmx9" />
+    <bpmn:sequenceFlow id="Flow_0cq8i3y" sourceRef="Activity_0zixmx9" targetRef="Activity_1enxkb2" />
+    <bpmn:sequenceFlow id="Flow_1qq7if7" sourceRef="Activity_1enxkb2" targetRef="Event_0zazrkc" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="eventResultProcessing">
+      <bpmndi:BPMNShape id="Event_0l17grw_di" bpmnElement="SubProcessStart">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_01h75h0" bpmnElement="Activity_10kgm0j">
+        <dc:Bounds x="250" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0z3qkt8" bpmnElement="Activity_0qx2idf">
+        <dc:Bounds x="400" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1y35f4g" bpmnElement="Activity_03zhjbh">
+        <dc:Bounds x="550" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1wfdhxg" bpmnElement="Activity_0zixmx9">
+        <dc:Bounds x="700" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0tatkpv" bpmnElement="Activity_1enxkb2">
+        <dc:Bounds x="840" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0zazrkc_di" bpmnElement="Event_0zazrkc">
+        <dc:Bounds x="992" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1jvxahf_di" bpmnElement="Flow_1jvxahf">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="250" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1e0hqtw_di" bpmnElement="Flow_1e0hqtw">
+        <di:waypoint x="350" y="120" />
+        <di:waypoint x="400" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14ew7hx_di" bpmnElement="Flow_14ew7hx">
+        <di:waypoint x="500" y="120" />
+        <di:waypoint x="550" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19cprdh_di" bpmnElement="Flow_19cprdh">
+        <di:waypoint x="650" y="120" />
+        <di:waypoint x="700" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0cq8i3y_di" bpmnElement="Flow_0cq8i3y">
+        <di:waypoint x="800" y="120" />
+        <di:waypoint x="840" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1qq7if7_di" bpmnElement="Flow_1qq7if7">
+        <di:waypoint x="940" y="120" />
+        <di:waypoint x="992" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

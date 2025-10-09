@@ -1,246 +1,128 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1weo58d" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.15.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.19.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1weo58d" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.39.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.19.0">
   <bpmn:collaboration id="Collaboration_0k88p5e">
     <bpmn:participant id="Participant_0sn1sdn" name="Обработка события" processRef="eventProcessing" />
   </bpmn:collaboration>
   <bpmn:process id="eventProcessing" isExecutable="true">
-    <bpmn:parallelGateway id="ParallelGateway" />
-    <bpmn:exclusiveGateway id="Gateway_0o2vcou" default="Flow_1w1iee9">
-      <bpmn:incoming>flow7</bpmn:incoming>
-      <bpmn:outgoing>Flow_1w1iee9</bpmn:outgoing>
-      <bpmn:outgoing>Flow_0gpk6kk</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
-    <bpmn:startEvent id="StartEvent" />
     <bpmn:endEvent id="EndEvent">
       <bpmn:incoming>Flow_0hrev2l</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:parallelGateway id="Gateway_0xch8pw">
-      <bpmn:incoming>Flow_0aty8xe</bpmn:incoming>
-      <bpmn:incoming>Flow_0oyc2lh</bpmn:incoming>
-      <bpmn:outgoing>Flow_0hrev2l</bpmn:outgoing>
-    </bpmn:parallelGateway>
-    <bpmn:exclusiveGateway id="Gateway_0jkrrvu">
-      <bpmn:incoming>Flow_1w1iee9</bpmn:incoming>
-      <bpmn:incoming>Flow_0py16hz</bpmn:incoming>
-      <bpmn:outgoing>Flow_0aty8xe</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
-    <bpmn:callActivity id="PrepareServiceResultNegative" name="Подготовка ответа" camunda:asyncAfter="true" calledElement="eventPrepare">
-      <bpmn:extensionElements>
-        <camunda:inputOutput>
-          <camunda:inputParameter name="requestId">${"requestIdAliasStartNegativePrepare"}</camunda:inputParameter>
-          <camunda:inputParameter name="response">${"responseAliasStartNegativePrepare"}</camunda:inputParameter>
-          <camunda:inputParameter name="status">NEGATIVE</camunda:inputParameter>
-          <camunda:inputParameter name="type">${"startPrepareTypeNegative"}</camunda:inputParameter>
-          <camunda:inputParameter name="enabled">true</camunda:inputParameter>
-        </camunda:inputOutput>
-        <camunda:in businessKey="#{execution.processBusinessKey}" />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_0gpk6kk</bpmn:incoming>
-      <bpmn:outgoing>Flow_1oyq43s</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:callActivity id="EndServiceResultNegative" name="Подготовка ответа" camunda:asyncAfter="true" calledElement="eventPrepare">
-      <bpmn:extensionElements>
-        <camunda:inputOutput>
-          <camunda:inputParameter name="requestId">${"requestIdAliasEndNegativePrepare"}</camunda:inputParameter>
-          <camunda:inputParameter name="response">${"responseAliasEndNegativePrepare"}</camunda:inputParameter>
-          <camunda:inputParameter name="status">NEGATIVE</camunda:inputParameter>
-          <camunda:inputParameter name="type">${"endPrepareTypeNegative"}</camunda:inputParameter>
-          <camunda:inputParameter name="responseAlias">${"responseAliasEndNegativePrepare"}</camunda:inputParameter>
-        </camunda:inputOutput>
-        <camunda:in businessKey="#{execution.processBusinessKey}" />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_0m589a6</bpmn:incoming>
-      <bpmn:outgoing>Flow_1gmsudd</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:callActivity id="PublicationEndServiceResultNegative" name="Публикация" camunda:asyncAfter="true" calledElement="eventPublication">
-      <bpmn:extensionElements>
-        <camunda:inputOutput>
-          <camunda:inputParameter name="requestId">${"requestIdAliasEndNegativePublication"}</camunda:inputParameter>
-          <camunda:inputParameter name="response">${"responseAliasEndNegativePublication"}</camunda:inputParameter>
-          <camunda:inputParameter name="status">NEGATIVE</camunda:inputParameter>
-          <camunda:inputParameter name="type">${"endPublicationTypeNegative"}</camunda:inputParameter>
-          <camunda:inputParameter name="mapResponse">
-            <camunda:map>
-              <camunda:entry key="&#34;endPrepareTypeNegative&#34;">${execution.getVariableTyped("responseAliasEndNegativePrepare", true)}</camunda:entry>
-            </camunda:map>
-          </camunda:inputParameter>
-        </camunda:inputOutput>
-        <camunda:in businessKey="#{execution.processBusinessKey}" />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_1gmsudd</bpmn:incoming>
-      <bpmn:outgoing>Flow_1d1cdf5</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:callActivity id="PublicationStartServiceResultNegative" name="Публикация" camunda:asyncAfter="true" calledElement="eventPublication">
-      <bpmn:extensionElements>
-        <camunda:inputOutput>
-          <camunda:inputParameter name="requestId">${"requestIdAliasStartNegativePublication"}</camunda:inputParameter>
-          <camunda:inputParameter name="response">${"responseAliasStartNegativePublication"}</camunda:inputParameter>
-          <camunda:inputParameter name="status">NEGATIVE</camunda:inputParameter>
-          <camunda:inputParameter name="type">${"startPublicationTypeNegative"}</camunda:inputParameter>
-          <camunda:inputParameter name="mapResponse">
-            <camunda:map>
-              <camunda:entry key="&#34;startPrepareTypeNegative&#34;">${execution.getVariableTyped("responseAliasStartNegativePrepare", true)}</camunda:entry>
-            </camunda:map>
-          </camunda:inputParameter>
-        </camunda:inputOutput>
-        <camunda:in businessKey="#{execution.processBusinessKey}" />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_1oyq43s</bpmn:incoming>
-      <bpmn:outgoing>Flow_0m589a6</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:callActivity id="SaveServiceResultNegative" name="Сохранение" camunda:asyncAfter="true" calledElement="eventSave">
-      <bpmn:extensionElements>
-        <camunda:inputOutput>
-          <camunda:inputParameter name="requestId">${"requestIdAliasSaveNegative"}</camunda:inputParameter>
-          <camunda:inputParameter name="response">${"responseAliasSaveNegative"}</camunda:inputParameter>
-          <camunda:inputParameter name="scenario">NEGATIVE_SCENARIO</camunda:inputParameter>
-          <camunda:inputParameter name="type">${"saveTypeNegative"}</camunda:inputParameter>
-          <camunda:inputParameter name="mapResponse">
-            <camunda:map>
-              <camunda:entry key="&#34;endPrepareTypeNegative&#34;">${execution.getVariableTyped("responseAliasEndNegativePrepare", true)}</camunda:entry>
-            </camunda:map>
-          </camunda:inputParameter>
-        </camunda:inputOutput>
-        <camunda:in businessKey="#{execution.processBusinessKey}" />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_1d1cdf5</bpmn:incoming>
-      <bpmn:outgoing>Flow_0py16hz</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:exclusiveGateway id="Gateway_14r5syq" default="Flow_0ddyv04">
-      <bpmn:incoming>flow2</bpmn:incoming>
-      <bpmn:outgoing>Flow_0sdd5tl</bpmn:outgoing>
-      <bpmn:outgoing>Flow_0ddyv04</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
-    <bpmn:exclusiveGateway id="Gateway_0kfa74y">
-      <bpmn:incoming>Flow_0u0qjj0</bpmn:incoming>
-      <bpmn:incoming>Flow_0ddyv04</bpmn:incoming>
-      <bpmn:outgoing>Flow_0oyc2lh</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
-    <bpmn:callActivity id="PrepareServiceResultPositive" name="Подготовка ответа" camunda:asyncAfter="true" calledElement="eventPrepare">
-      <bpmn:extensionElements>
-        <camunda:inputOutput>
-          <camunda:inputParameter name="requestId">${"requestIdAliasStartPositivePrepare"}</camunda:inputParameter>
-          <camunda:inputParameter name="response">${"responseAliasStartPositivePrepare"}</camunda:inputParameter>
-          <camunda:inputParameter name="status">POSITIVE</camunda:inputParameter>
-          <camunda:inputParameter name="type">${"startPrepareTypePositive"}</camunda:inputParameter>
-          <camunda:inputParameter name="enabled">true</camunda:inputParameter>
-        </camunda:inputOutput>
-        <camunda:in businessKey="#{execution.processBusinessKey}" />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_0sdd5tl</bpmn:incoming>
-    </bpmn:callActivity>
-    <bpmn:callActivity id="PublicationStartServiceResultPositive" name="Публикация" camunda:asyncAfter="true" calledElement="eventPublication">
-      <bpmn:extensionElements>
-        <camunda:inputOutput>
-          <camunda:inputParameter name="requestId">${"requestIdAliasStartPositivePublication"}</camunda:inputParameter>
-          <camunda:inputParameter name="response">${"responseAliasStartPositivePublication"}</camunda:inputParameter>
-          <camunda:inputParameter name="status">POSITIVE</camunda:inputParameter>
-          <camunda:inputParameter name="type">${"startPublicationTypePositive"}</camunda:inputParameter>
-          <camunda:inputParameter name="mapResponse">
-            <camunda:map>
-              <camunda:entry key="&#34;startPrepareTypePositive&#34;">${execution.getVariableTyped("responseAliasStartPositivePrepare", true)}</camunda:entry>
-            </camunda:map>
-          </camunda:inputParameter>
-        </camunda:inputOutput>
-        <camunda:in businessKey="#{execution.processBusinessKey}" />
-      </bpmn:extensionElements>
-      <bpmn:outgoing>Flow_0q7xptw</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:callActivity id="SaveServiceResultPositive" name="Сохранение" camunda:asyncAfter="true" calledElement="eventSave">
-      <bpmn:extensionElements>
-        <camunda:inputOutput>
-          <camunda:inputParameter name="requestId">${"requestIdAliasSavePositive"}</camunda:inputParameter>
-          <camunda:inputParameter name="response">${"responseAliasSavePositive"}</camunda:inputParameter>
-          <camunda:inputParameter name="scenario">POSITIVE_SCENARIO</camunda:inputParameter>
-          <camunda:inputParameter name="type">${"saveTypePositive"}</camunda:inputParameter>
-          <camunda:inputParameter name="mapResponse">
-            <camunda:map>
-              <camunda:entry key="&#34;endPrepareTypePositive&#34;">${execution.getVariableTyped("responseAliasEndPositivePrepare", true)}</camunda:entry>
-            </camunda:map>
-          </camunda:inputParameter>
-        </camunda:inputOutput>
-        <camunda:in businessKey="#{execution.processBusinessKey}" />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_074bq4z</bpmn:incoming>
-      <bpmn:outgoing>Flow_0u0qjj0</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:callActivity id="EndServiceResultPositive" name="Подготовка ответа" camunda:asyncAfter="true" calledElement="eventPrepare">
-      <bpmn:extensionElements>
-        <camunda:inputOutput>
-          <camunda:inputParameter name="requestId">${"requestIdAliasEndPositivePrepare"}</camunda:inputParameter>
-          <camunda:inputParameter name="response">${"responseAliasEndPositivePrepare"}</camunda:inputParameter>
-          <camunda:inputParameter name="status">POSITIVE</camunda:inputParameter>
-          <camunda:inputParameter name="type">${"endPrepareTypePositive"}</camunda:inputParameter>
-          <camunda:inputParameter name="responseAlias">${"responseAliasEndPositivePrepare"}</camunda:inputParameter>
-        </camunda:inputOutput>
-        <camunda:in businessKey="#{execution.processBusinessKey}" />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_0q7xptw</bpmn:incoming>
-      <bpmn:outgoing>Flow_1i9cy06</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:callActivity id="PublicationEndServiceResultPositive" name="Публикация" camunda:asyncAfter="true" calledElement="eventPublication">
-      <bpmn:extensionElements>
-        <camunda:inputOutput>
-          <camunda:inputParameter name="requestId">${"requestIdAliasEndPositivePublication"}</camunda:inputParameter>
-          <camunda:inputParameter name="response">${"responseAliasEndPositivePublication"}</camunda:inputParameter>
-          <camunda:inputParameter name="status">POSITIVE</camunda:inputParameter>
-          <camunda:inputParameter name="type">${"endPublicationTypePositive"}</camunda:inputParameter>
-          <camunda:inputParameter name="mapResponse">
-            <camunda:map>
-              <camunda:entry key="&#34;endPrepareTypePositive&#34;">${execution.getVariableTyped("responseAliasEndPositivePrepare", true)}</camunda:entry>
-            </camunda:map>
-          </camunda:inputParameter>
-        </camunda:inputOutput>
-        <camunda:in businessKey="#{execution.processBusinessKey}" />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_1i9cy06</bpmn:incoming>
-      <bpmn:outgoing>Flow_074bq4z</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:sequenceFlow id="flow1" sourceRef="StartEvent" targetRef="ParallelGateway" />
-    <bpmn:sequenceFlow id="flow2" sourceRef="ParallelGateway" targetRef="Gateway_14r5syq" />
-    <bpmn:sequenceFlow id="flow7" sourceRef="ParallelGateway" targetRef="Gateway_0o2vcou" />
-    <bpmn:sequenceFlow id="Flow_1w1iee9" sourceRef="Gateway_0o2vcou" targetRef="Gateway_0jkrrvu" />
-    <bpmn:sequenceFlow id="Flow_0gpk6kk" sourceRef="Gateway_0o2vcou" targetRef="PrepareServiceResultNegative">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${bpmUtil.isNegative(execution) || bpmUtil.isNatural(execution)}</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_0hrev2l" sourceRef="Gateway_0xch8pw" targetRef="EndEvent" />
-    <bpmn:sequenceFlow id="Flow_0aty8xe" sourceRef="Gateway_0jkrrvu" targetRef="Gateway_0xch8pw" />
-    <bpmn:sequenceFlow id="Flow_0oyc2lh" sourceRef="Gateway_0kfa74y" targetRef="Gateway_0xch8pw" />
-    <bpmn:sequenceFlow id="Flow_0py16hz" sourceRef="SaveServiceResultNegative" targetRef="Gateway_0jkrrvu" />
-    <bpmn:sequenceFlow id="Flow_1oyq43s" sourceRef="PrepareServiceResultNegative" targetRef="PublicationStartServiceResultNegative" />
-    <bpmn:sequenceFlow id="Flow_0m589a6" sourceRef="PublicationStartServiceResultNegative" targetRef="EndServiceResultNegative" />
-    <bpmn:sequenceFlow id="Flow_1gmsudd" sourceRef="EndServiceResultNegative" targetRef="PublicationEndServiceResultNegative" />
-    <bpmn:sequenceFlow id="Flow_1d1cdf5" sourceRef="PublicationEndServiceResultNegative" targetRef="SaveServiceResultNegative" />
-    <bpmn:sequenceFlow id="Flow_0sdd5tl" sourceRef="Gateway_14r5syq" targetRef="PrepareServiceResultPositive">
+    <bpmn:callActivity id="Call_ProcessResultNeg" name="Обработка NEGATIVE" calledElement="eventResultProcessing">
+      <bpmn:extensionElements>
+        <camunda:in businessKey="#{execution.processBusinessKey}" />
+        <camunda:inputOutput>
+          <camunda:inputParameter name="status">NEGATIVE</camunda:inputParameter>
+          <camunda:inputParameter name="scenario">NEGATIVE_SCENARIO</camunda:inputParameter>
+          <camunda:inputParameter name="requestId_StartPrepare">${"requestIdAliasStartNegativePrepare"}</camunda:inputParameter>
+          <camunda:inputParameter name="requestId_StartPublication">${"requestIdAliasStartNegativePublication"}</camunda:inputParameter>
+          <camunda:inputParameter name="requestId_EndPrepare">${"requestIdAliasEndNegativePrepare"}</camunda:inputParameter>
+          <camunda:inputParameter name="requestId_EndPublication">${"requestIdAliasEndNegativePublication"}</camunda:inputParameter>
+          <camunda:inputParameter name="requestId_Save">${"requestIdAliasSaveNegative"}</camunda:inputParameter>
+          <camunda:inputParameter name="response_StartPrepare">${"responseAliasStartNegativePrepare"}</camunda:inputParameter>
+          <camunda:inputParameter name="response_StartPublication">${"responseAliasStartNegativePublication"}</camunda:inputParameter>
+          <camunda:inputParameter name="response_EndPrepare">${"responseAliasEndNegativePrepare"}</camunda:inputParameter>
+          <camunda:inputParameter name="response_EndPublication">${"responseAliasEndNegativePublication"}</camunda:inputParameter>
+          <camunda:inputParameter name="response_Save">${"responseAliasSaveNegative"}</camunda:inputParameter>
+          <camunda:inputParameter name="type_StartPrepare">${"startPrepareTypeNegative"}</camunda:inputParameter>
+          <camunda:inputParameter name="type_StartPublication">${"startPublicationTypeNegative"}</camunda:inputParameter>
+          <camunda:inputParameter name="type_EndPrepare">${"endPrepareTypeNegative"}</camunda:inputParameter>
+          <camunda:inputParameter name="type_EndPublication">${"endPublicationTypeNegative"}</camunda:inputParameter>
+          <camunda:inputParameter name="type_Save">${"saveTypeNegative"}</camunda:inputParameter>
+          <camunda:inputParameter name="responseAliasValue">${"responseAliasEndNegativePrepare"}</camunda:inputParameter>
+          <camunda:inputParameter name="mapResponse_StartPublication">
+            <camunda:map>
+              <camunda:entry key="startPrepareTypeNegative">${execution.getVariableTyped("responseAliasStartNegativePrepare", true)}</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="mapResponse_EndPublication">
+            <camunda:map>
+              <camunda:entry key="endPrepareTypeNegative">${execution.getVariableTyped("responseAliasEndNegativePrepare", true)}</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="mapResponse_Save">
+            <camunda:map>
+              <camunda:entry key="endPrepareTypeNegative">${execution.getVariableTyped("responseAliasEndNegativePrepare", true)}</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ToNegativeProc</bpmn:incoming>
+      <bpmn:outgoing>Flow_1viadtn</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:sequenceFlow id="Flow_11inxa0" sourceRef="StartEvent" targetRef="Gateway_0i0x1fr" />
+    <bpmn:sequenceFlow id="Flow_ToPositiveProc" name="positive" sourceRef="Gateway_0i0x1fr" targetRef="Call_ProcessResultPos">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${bpmUtil.isPositive(execution) || bpmUtil.isNatural(execution)}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_0ddyv04" sourceRef="Gateway_14r5syq" targetRef="Gateway_0kfa74y" />
-    <bpmn:sequenceFlow id="Flow_0u0qjj0" sourceRef="SaveServiceResultPositive" targetRef="Gateway_0kfa74y" />
-    <bpmn:sequenceFlow id="flow4" sourceRef="PrepareServiceResultPositive" targetRef="PublicationStartServiceResultPositive" />
-    <bpmn:sequenceFlow id="Flow_0q7xptw" sourceRef="PublicationStartServiceResultPositive" targetRef="EndServiceResultPositive" />
-    <bpmn:sequenceFlow id="Flow_074bq4z" sourceRef="PublicationEndServiceResultPositive" targetRef="SaveServiceResultPositive" />
-    <bpmn:sequenceFlow id="Flow_1i9cy06" sourceRef="EndServiceResultPositive" targetRef="PublicationEndServiceResultPositive" />
+    <bpmn:sequenceFlow id="Flow_ToNegativeProc" name="negative" sourceRef="Gateway_0i0x1fr" targetRef="Call_ProcessResultNeg">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${bpmUtil.isNegative(execution) || bpmUtil.isNatural(execution)}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0afav90" sourceRef="Call_ProcessResultPos" targetRef="Gateway_0xch8pw" />
+    <bpmn:sequenceFlow id="Flow_1viadtn" sourceRef="Call_ProcessResultNeg" targetRef="Gateway_0xch8pw" />
+    <bpmn:callActivity id="Call_ProcessResultPos" name="Обработка POSITIVE" calledElement="eventResultProcessing">
+      <bpmn:extensionElements>
+        <camunda:in businessKey="#{execution.processBusinessKey}" />
+        <camunda:inputOutput>
+          <camunda:inputParameter name="status">POSITIVE</camunda:inputParameter>
+          <camunda:inputParameter name="scenario">POSITIVE_SCENARIO</camunda:inputParameter>
+          <camunda:inputParameter name="requestId_StartPrepare">${"requestIdAliasStartPositivePrepare"}</camunda:inputParameter>
+          <camunda:inputParameter name="requestId_StartPublication">${"requestIdAliasStartPositivePublication"}</camunda:inputParameter>
+          <camunda:inputParameter name="requestId_EndPrepare">${"requestIdAliasEndPositivePrepare"}</camunda:inputParameter>
+          <camunda:inputParameter name="requestId_EndPublication">${"requestIdAliasEndPositivePublication"}</camunda:inputParameter>
+          <camunda:inputParameter name="requestId_Save">${"requestIdAliasSavePositive"}</camunda:inputParameter>
+          <camunda:inputParameter name="response_StartPrepare">${"responseAliasStartPositivePrepare"}</camunda:inputParameter>
+          <camunda:inputParameter name="response_StartPublication">${"responseAliasStartPositivePublication"}</camunda:inputParameter>
+          <camunda:inputParameter name="response_EndPrepare">${"responseAliasEndPositivePrepare"}</camunda:inputParameter>
+          <camunda:inputParameter name="response_EndPublication">${"responseAliasEndPositivePublication"}</camunda:inputParameter>
+          <camunda:inputParameter name="response_Save">${"responseAliasSavePositive"}</camunda:inputParameter>
+          <camunda:inputParameter name="type_StartPrepare">${"startPrepareTypePositive"}</camunda:inputParameter>
+          <camunda:inputParameter name="type_StartPublication">${"startPublicationTypePositive"}</camunda:inputParameter>
+          <camunda:inputParameter name="type_EndPrepare">${"endPrepareTypePositive"}</camunda:inputParameter>
+          <camunda:inputParameter name="type_EndPublication">${"endPublicationTypePositive"}</camunda:inputParameter>
+          <camunda:inputParameter name="type_Save">${"saveTypePositive"}</camunda:inputParameter>
+          <camunda:inputParameter name="responseAliasValue">${"responseAliasEndPositivePrepare"}</camunda:inputParameter>
+          <camunda:inputParameter name="mapResponse_StartPublication">
+            <camunda:map>
+              <camunda:entry key="startPrepareTypePositive">${execution.getVariableTyped("responseAliasStartPositivePrepare", true)}</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="mapResponse_EndPublication">
+            <camunda:map>
+              <camunda:entry key="endPrepareTypePositive">${execution.getVariableTyped("responseAliasEndPositivePrepare", true)}</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="mapResponse_Save">
+            <camunda:map>
+              <camunda:entry key="endPrepareTypePositive">${execution.getVariableTyped("responseAliasEndPositivePrepare", true)}</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ToPositiveProc</bpmn:incoming>
+      <bpmn:outgoing>Flow_0afav90</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:sequenceFlow id="Flow_1hx5gie" sourceRef="Gateway_0i0x1fr" targetRef="Gateway_0xch8pw" />
+    <bpmn:startEvent id="StartEvent">
+      <bpmn:outgoing>Flow_11inxa0</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:inclusiveGateway id="Gateway_0xch8pw">
+      <bpmn:incoming>Flow_0afav90</bpmn:incoming>
+      <bpmn:incoming>Flow_1viadtn</bpmn:incoming>
+      <bpmn:incoming>Flow_1hx5gie</bpmn:incoming>
+      <bpmn:outgoing>Flow_0hrev2l</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+    <bpmn:inclusiveGateway id="Gateway_0i0x1fr" default="Flow_1hx5gie">
+      <bpmn:incoming>Flow_11inxa0</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToPositiveProc</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ToNegativeProc</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1hx5gie</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_eventProcessing">
     <bpmndi:BPMNPlane id="BPMNPlane_eventProcessing" bpmnElement="Collaboration_0k88p5e">
       <bpmndi:BPMNShape id="Participant_0sn1sdn_di" bpmnElement="Participant_0sn1sdn" isHorizontal="true">
-        <dc:Bounds x="160" y="80" width="1310" height="510" />
+        <dc:Bounds x="160" y="80" width="1310" height="540" />
         <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="ParallelGateway_di" bpmnElement="ParallelGateway">
-        <dc:Bounds x="350" y="320" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="410" y="201.5" width="78" height="27" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_0o2vcou_di" bpmnElement="Gateway_0o2vcou" isMarkerVisible="true">
-        <dc:Bounds x="350" y="425" width="50" height="50" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="StartEvent_di" bpmnElement="StartEvent">
-        <dc:Bounds x="212" y="329" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="206" y="285" width="49" height="27" />
-        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="EndEvent_di" bpmnElement="EndEvent">
         <dc:Bounds x="1412" y="327" width="36" height="36" />
@@ -248,134 +130,63 @@
           <dc:Bounds x="1401" y="283" width="59" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_1swsdwz" bpmnElement="Gateway_0xch8pw">
-        <dc:Bounds x="1275" y="320" width="50" height="50" />
+      <bpmndi:BPMNShape id="Activity_0f4qwc1_di" bpmnElement="Call_ProcessResultNeg">
+        <dc:Bounds x="785" y="410" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0vaa0qq" bpmnElement="Call_ProcessResultPos">
+        <dc:Bounds x="785" y="190" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_di" bpmnElement="StartEvent">
+        <dc:Bounds x="212" y="327" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="711" y="111" width="78" height="27" />
+          <dc:Bounds x="206" y="285" width="49" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_0jkrrvu_di" bpmnElement="Gateway_0jkrrvu" isMarkerVisible="true">
-        <dc:Bounds x="1275" y="425" width="50" height="50" />
+      <bpmndi:BPMNShape id="Gateway_0e5bvzo_di" bpmnElement="Gateway_0xch8pw">
+        <dc:Bounds x="1275" y="320" width="50" height="50" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_0skb4ju" bpmnElement="PrepareServiceResultNegative">
-        <dc:Bounds x="470" y="410" width="100" height="80" />
+      <bpmndi:BPMNShape id="Gateway_06vv1e1_di" bpmnElement="Gateway_0i0x1fr">
+        <dc:Bounds x="350" y="320" width="50" height="50" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_0g6cxbj" bpmnElement="EndServiceResultNegative">
-        <dc:Bounds x="770" y="410" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_0q12i2o" bpmnElement="PublicationEndServiceResultNegative">
-        <dc:Bounds x="920" y="410" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_0uwl7cz" bpmnElement="PublicationStartServiceResultNegative">
-        <dc:Bounds x="620" y="410" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_1c5gy9r" bpmnElement="SaveServiceResultNegative">
-        <dc:Bounds x="1090" y="410" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_01sua9x" bpmnElement="Gateway_14r5syq" isMarkerVisible="true">
-        <dc:Bounds x="350" y="195" width="50" height="50" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_1bg11dz" bpmnElement="Gateway_0kfa74y" isMarkerVisible="true">
-        <dc:Bounds x="1275" y="195" width="50" height="50" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="PrepareResponseUpper_di" bpmnElement="PrepareServiceResultPositive">
-        <dc:Bounds x="470" y="180" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="PublishUpper_di" bpmnElement="PublicationStartServiceResultPositive">
-        <dc:Bounds x="620" y="180" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_073dl7b" bpmnElement="SaveServiceResultPositive">
-        <dc:Bounds x="1090" y="180" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_0nun3yz" bpmnElement="EndServiceResultPositive">
-        <dc:Bounds x="770" y="180" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_11t1rky" bpmnElement="PublicationEndServiceResultPositive">
-        <dc:Bounds x="920" y="180" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="flow1_di" bpmnElement="flow1">
-        <di:waypoint x="248" y="345" />
-        <di:waypoint x="350" y="345" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow2_di" bpmnElement="flow2">
-        <di:waypoint x="375" y="320" />
-        <di:waypoint x="375" y="245" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow7_di" bpmnElement="flow7">
-        <di:waypoint x="375" y="370" />
-        <di:waypoint x="375" y="425" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1w1iee9_di" bpmnElement="Flow_1w1iee9">
-        <di:waypoint x="375" y="475" />
-        <di:waypoint x="375" y="560" />
-        <di:waypoint x="1300" y="560" />
-        <di:waypoint x="1300" y="475" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0gpk6kk_di" bpmnElement="Flow_0gpk6kk">
-        <di:waypoint x="400" y="450" />
-        <di:waypoint x="470" y="450" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0hrev2l_di" bpmnElement="Flow_0hrev2l">
         <di:waypoint x="1325" y="345" />
         <di:waypoint x="1412" y="345" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0aty8xe_di" bpmnElement="Flow_0aty8xe">
-        <di:waypoint x="1300" y="425" />
-        <di:waypoint x="1300" y="370" />
+      <bpmndi:BPMNEdge id="Flow_11inxa0_di" bpmnElement="Flow_11inxa0">
+        <di:waypoint x="248" y="345" />
+        <di:waypoint x="350" y="345" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0oyc2lh_di" bpmnElement="Flow_0oyc2lh">
-        <di:waypoint x="1300" y="245" />
+      <bpmndi:BPMNEdge id="Flow_0xb4fh8_di" bpmnElement="Flow_ToPositiveProc">
+        <di:waypoint x="375" y="320" />
+        <di:waypoint x="375" y="230" />
+        <di:waypoint x="785" y="230" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="391" y="271" width="38" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1p4b3li_di" bpmnElement="Flow_ToNegativeProc">
+        <di:waypoint x="375" y="370" />
+        <di:waypoint x="375" y="460" />
+        <di:waypoint x="785" y="460" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="389" y="412" width="42" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0afav90_di" bpmnElement="Flow_0afav90">
+        <di:waypoint x="885" y="230" />
+        <di:waypoint x="1300" y="230" />
         <di:waypoint x="1300" y="320" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0py16hz_di" bpmnElement="Flow_0py16hz">
-        <di:waypoint x="1190" y="450" />
-        <di:waypoint x="1275" y="450" />
+      <bpmndi:BPMNEdge id="Flow_1viadtn_di" bpmnElement="Flow_1viadtn">
+        <di:waypoint x="885" y="450" />
+        <di:waypoint x="1300" y="450" />
+        <di:waypoint x="1300" y="370" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="BPMNEdge_1edjj5b" bpmnElement="Flow_1oyq43s">
-        <di:waypoint x="570" y="450" />
-        <di:waypoint x="620" y="450" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="BPMNEdge_1dpf0hv" bpmnElement="Flow_0m589a6">
-        <di:waypoint x="720" y="450" />
-        <di:waypoint x="770" y="450" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="BPMNEdge_0wn7936" bpmnElement="Flow_1gmsudd">
-        <di:waypoint x="870" y="450" />
-        <di:waypoint x="920" y="450" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="BPMNEdge_1yc9voe" bpmnElement="Flow_1d1cdf5">
-        <di:waypoint x="1020" y="450" />
-        <di:waypoint x="1090" y="450" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0sdd5tl_di" bpmnElement="Flow_0sdd5tl">
-        <di:waypoint x="400" y="220" />
-        <di:waypoint x="470" y="220" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0ddyv04_di" bpmnElement="Flow_0ddyv04">
-        <di:waypoint x="375" y="195" />
-        <di:waypoint x="375" y="110" />
-        <di:waypoint x="1300" y="110" />
-        <di:waypoint x="1300" y="195" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0u0qjj0_di" bpmnElement="Flow_0u0qjj0">
-        <di:waypoint x="1190" y="220" />
-        <di:waypoint x="1275" y="220" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow4_di" bpmnElement="flow4">
-        <di:waypoint x="570" y="220" />
-        <di:waypoint x="620" y="220" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0q7xptw_di" bpmnElement="Flow_0q7xptw">
-        <di:waypoint x="720" y="220" />
-        <di:waypoint x="770" y="220" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_074bq4z_di" bpmnElement="Flow_074bq4z">
-        <di:waypoint x="1020" y="220" />
-        <di:waypoint x="1090" y="220" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="BPMNEdge_0gax6sh" bpmnElement="Flow_1i9cy06">
-        <di:waypoint x="870" y="220" />
-        <di:waypoint x="920" y="220" />
+      <bpmndi:BPMNEdge id="Flow_1hx5gie_di" bpmnElement="Flow_1hx5gie">
+        <di:waypoint x="400" y="345" />
+        <di:waypoint x="1275" y="345" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
